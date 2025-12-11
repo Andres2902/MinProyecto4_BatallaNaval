@@ -19,7 +19,7 @@ public class Ship implements Serializable {
         return type;
     }
 
-    public void addPosition(String pos) {
+    public void addPosition(String pos) { //agrega una celda al barco cuando se coloca
         positions.add(pos);
     }
 
@@ -27,7 +27,7 @@ public class Ship implements Serializable {
         return positions;
     }
 
-    public boolean occupies(String pos) {
+    public boolean occupies(String pos) { //verifica si el barco ocupa esa posicion
         return positions.contains(pos);
     }
 
@@ -37,7 +37,7 @@ public class Ship implements Serializable {
         }
     }
 
-    public boolean isSunk() {
+    public boolean isSunk() { //compara los hits con las posiciones que ocupa el barco
         return hits.size() >= positions.size();
     }
 }

@@ -6,7 +6,7 @@ public class Cell implements Serializable {
     private  int row; //fila
     private  int col; //columna
     private boolean wasShot; //Fue disparada
-    private Ship ship; // null si no hay barco
+    private Ship ship; // referencia al barco si existe, null si no hay barco
 
     public Cell(int row, int col) {
         this.row = row;
@@ -27,7 +27,7 @@ public class Cell implements Serializable {
         return wasShot;
     }
 
-    public void markShot() {
+    public void markShot() { // Marca la celda disparada
         this.wasShot = true;
     }
 

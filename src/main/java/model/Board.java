@@ -61,7 +61,8 @@ public class Board implements Serializable {
         }
 
         // comprobar Superposicion con occupied
-        for (String pos : positions) {
+        for (int i = 0; i < positions.size(); i++) {
+            String pos = positions.get(i);
             if (occupied.contains(pos)) {
                 throw new InvalidPlacementException("Ship overlaps at " + pos);
             }
@@ -82,7 +83,7 @@ public class Board implements Serializable {
      * Si ya fue disparada lanza GameStateException.
      * Retorna ShotResult: MISS, HIT, SUNK
      */
-    public ShotResult shootAt(int r, int c) {
+    public synchronized ShotResult shootAt(int r, int c) {
         if (!inRange(r, c)) {
             throw new GameStateException("Shot out of bounds: " + r + "," + c);
         }
@@ -141,4 +142,9 @@ public class Board implements Serializable {
     public List<Ship> getShips() {
         return ships;
     }
+
+    public synchronized Cell getCell(int r, int c) {
+        return cells.get(key(r,c));
+    }
+
 }
