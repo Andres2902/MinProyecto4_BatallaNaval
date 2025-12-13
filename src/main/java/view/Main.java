@@ -1,5 +1,6 @@
 package view;
 
+import controller.GameController;
 import persistence.SaveManager;
 import model.GameState;
 
@@ -29,7 +30,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         GameState gs = new GameState(b, new Board(), true, "Player1");
         Path file = Path.of("saves/quick_save.ser");
         SaveManager.saveGame(gs,file);

@@ -13,7 +13,8 @@ public class GameController {
     private  Board playerBoard;
     private  Board enemyBoard;
     private boolean playerTurn = true;
-    private  ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
+
+    ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
     private Random random = new Random();
 
     public GameController(Board playerBoard, Board enemyBoard) {
@@ -21,7 +22,7 @@ public class GameController {
         this.enemyBoard = enemyBoard;
     }
 
-    // Método llamado por la UI cuando el jugador hace clic en el tablero enemigo (dispara)
+    // Metodo llamado por la UI cuando el jugador hace clic en el tablero enemigo (dispara)
     public synchronized ShotResult playerShoots(int row, int col) {
 
         if (!playerTurn) {
@@ -39,26 +40,21 @@ public class GameController {
         return result;
     }
 
-    // Lógica simple de IA
-    // AI logic executed off JavaFX thread
+    //Lógica simple de IA
     private void aiPlay() {
         try {
-            // simple random selection until finds a cell not shot
+            Thread.sleep(700); // simula "pensar"
+
             int r, c;
-            ShotResult res;
             do {
                 r = random.nextInt(Board.SIZE);
                 c = random.nextInt(Board.SIZE);
-                synchronized (playerBoard) { // lock board modifications
-                    Cell cell = playerBoard.getCell(r, c); // we'll add this getter
-                    if (cell.wasShot()) continue;
-                    res = playerBoard.shootAt(r, c);
-                }
-                // update UI on FX thread (MainController debe proporcionar callback para render)
-                // Example:
-                // Platform.runLater(() -> mainController.onAiShot(r,c,res));
-                break;
-            } while (true);
+            } while (playerBoard.getCell(r, c).wasShot());
+
+            playerBoard.shootAt(r, c);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } finally {
             playerTurn = true;
         }
@@ -68,5 +64,11 @@ public class GameController {
         aiExecutor.shutdownNow();
     }
 
-    public boolean isPlayerTurn() { return playerTurn; }
+    public boolean isPlayerTurn() {
+        return playerTurn;
+    }
+
+    public boolean isGameOver() {
+        return playerBoard.allShipsSunk() || enemyBoard.allShipsSunk();
+    }
 }
