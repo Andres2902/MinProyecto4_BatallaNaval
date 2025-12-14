@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.batalla_naval.view.NavalGameViewController">
+
+    <center>
+        <GridPane fx:id="enemyGrid"
+                  hgap="2"
+                  vgap="2"/>
+    </center>
+
+</BorderPane>

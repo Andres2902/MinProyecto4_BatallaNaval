@@ -1,7 +1,11 @@
 package model;
 
-import exceptions.InvalidPlacementException;
-import exceptions.GameStateException;
+import com.example.batalla_naval.exceptions.InvalidPlacementException;
+import com.example.batalla_naval.exceptions.GameStateException;
+import com.example.batalla_naval.model.Board;
+import com.example.batalla_naval.model.Ship;
+import com.example.batalla_naval.model.ShipType;
+import com.example.batalla_naval.model.ShotResult;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

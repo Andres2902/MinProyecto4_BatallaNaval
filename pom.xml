@@ -61,7 +61,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.batalla_naval/com.example.batalla_naval.HelloApplication</mainClass>
+                            <mainClass>/com.example.batalla_naval.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>

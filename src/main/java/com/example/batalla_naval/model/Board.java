@@ -1,7 +1,8 @@
-package model;
+package com.example.batalla_naval.model;
 
-import exceptions.InvalidPlacementException;
-import  exceptions.*;
+import com.example.batalla_naval.exceptions.GameStateException;
+import com.example.batalla_naval.exceptions.InvalidPlacementException;
+import  com.example.batalla_naval.exceptions.*;
 import java.io.Serializable;
 import java.util.*;
 

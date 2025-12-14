@@ -1,6 +1,6 @@
-package persistence;
+package com.example.batalla_naval.persistence;
 
-import model.GameState;
+import com.example.batalla_naval.model.GameState;
 
 import java.io.*;
 import java.nio.file.*;

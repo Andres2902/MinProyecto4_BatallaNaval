@@ -1,4 +1,4 @@
-package model;
+package com.example.batalla_naval.model;
 
 import java.io.Serializable;
 

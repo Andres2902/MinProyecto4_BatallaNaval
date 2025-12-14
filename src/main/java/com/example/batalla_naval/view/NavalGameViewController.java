@@ -1,13 +1,13 @@
-package controller;
+package com.example.batalla_naval.view;
 
 import javafx.fxml.FXML;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 
-import controller.GameController;
-import model.ShotResult;
+import com.example.batalla_naval.controller.GameController;
+import com.example.batalla_naval.model.ShotResult;
 
-public class MainController {
+public class NavalGameViewController {
 
     @FXML
     private GridPane enemyGrid;
@@ -20,9 +20,16 @@ public class MainController {
         for(int r = 0; r < 10; r++){
             for(int c = 0; c < 10; c++){
                 StackPane cellPane = new StackPane();
-                cellPane.setPrefSize(32,32);
+                cellPane.setPrefSize(32, 32);
 
-                int rr = r, cc = c;
+                // AGUA (visual)
+                cellPane.setStyle("""
+                -fx-background-color: lightblue;
+                -fx-border-color: black;
+                """);
+
+                int rr = r;
+                int cc = c;
 
                 cellPane.setOnMouseClicked(e -> onEnemyCellClicked(rr, cc));
 

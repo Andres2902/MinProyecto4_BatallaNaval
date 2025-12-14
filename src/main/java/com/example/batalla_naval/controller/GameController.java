@@ -1,8 +1,7 @@
-package controller;
+package com.example.batalla_naval.controller;
 
-import model.Board;
-import model.Cell;
-import model.ShotResult;
+import com.example.batalla_naval.model.Board;
+import com.example.batalla_naval.model.ShotResult;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +13,7 @@ public class GameController {
     private  Board enemyBoard;
     private boolean playerTurn = true;
 
-    ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
+    public ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
     private Random random = new Random();
 
     public GameController(Board playerBoard, Board enemyBoard) {
@@ -61,14 +60,17 @@ public class GameController {
     }
 
     public void shutdown() {
+
         aiExecutor.shutdownNow();
     }
 
     public boolean isPlayerTurn() {
+
         return playerTurn;
     }
 
     public boolean isGameOver() {
+
         return playerBoard.allShipsSunk() || enemyBoard.allShipsSunk();
     }
 }

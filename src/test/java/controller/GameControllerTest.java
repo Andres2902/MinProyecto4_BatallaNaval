@@ -1,10 +1,11 @@
 package controller;
 
-import exceptions.InvalidPlacementException;
-import model.Board;
-import model.Ship;
-import model.ShipType;
-import model.ShotResult;
+import com.example.batalla_naval.controller.GameController;
+import com.example.batalla_naval.exceptions.InvalidPlacementException;
+import com.example.batalla_naval.model.Board;
+import com.example.batalla_naval.model.Ship;
+import com.example.batalla_naval.model.ShipType;
+import com.example.batalla_naval.model.ShotResult;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
