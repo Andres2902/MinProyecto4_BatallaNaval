@@ -1,6 +1,7 @@
 package com.example.batalla_naval.controller;
 
 import com.example.batalla_naval.model.*;
+import com.example.batalla_naval.persistence.PlayerRecord;
 import com.example.batalla_naval.persistence.SaveManager;
 import com.example.batalla_naval.view.TurnListener;
 
@@ -14,11 +15,11 @@ public class GameController {
 
     private  Board playerBoard;
     private  Board enemyBoard;
-    private boolean playerTurn = true;
     private GamePhase phase = GamePhase.SETUP;
     public ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
     private Random random = new Random();
     private static final Path SAVE_FILE = Path.of("saves/game_state.ser");
+    private String playerNickname = "Player1"; // luego lo mejoras con WelcomeView
 
     public GameController(Board playerBoard, Board enemyBoard) {
         this.playerBoard = playerBoard;
@@ -26,33 +27,33 @@ public class GameController {
     }
 
     // Metodo llamado por la UI cuando el jugador hace clic en el tablero enemigo (dispara)
-    public synchronized ShotResult playerShoots(int row, int col) throws IOException {
+    public synchronized ShotResult playerShoots(int row, int col) {
 
         if (phase != GamePhase.PLAYER_TURN) {
-            throw new IllegalStateException("It is not the player's turn.");
+            throw new IllegalStateException("Not player's turn");
         }
 
         ShotResult result = enemyBoard.shootAt(row, col);
 
-        SaveManager.saveGame(
-                new GameState(playerBoard, enemyBoard, phase == GamePhase.PLAYER_TURN, "Player1"),
-                Path.of("saves/game_state.ser")
-        );
-
-
         if (enemyBoard.allShipsSunk()) {
             phase = GamePhase.GAME_OVER;
-            if (turnListener != null) {
-                turnListener.onGameOver(true); // jugador gana
-            }
+            deleteSave();
+            notifyGameOver(true);
             return result;
         }
+
         if (result == ShotResult.MISS) {
             phase = GamePhase.ENEMY_TURN;
+            autoSave();
             aiExecutor.submit(this::aiPlay);
+        } else {
+            // HIT o SUNK → sigue jugador
+            autoSave();
         }
+
         return result;
     }
+
 
     private TurnListener turnListener;
 
@@ -66,51 +67,41 @@ public class GameController {
             Thread.sleep(700);
 
             int r, c;
-
             do {
                 r = random.nextInt(Board.SIZE);
                 c = random.nextInt(Board.SIZE);
             } while (playerBoard.getCell(r, c).wasShot());
 
             ShotResult result = playerBoard.shootAt(r, c);
-            SaveManager.saveGame(
-                    new GameState(playerBoard, enemyBoard, phase == GamePhase.PLAYER_TURN, "Player1"),
-                    Path.of("saves/game_state.ser")
-            );
-
+            autoSave();
             if (turnListener != null) {
                 turnListener.onEnemyShot(r, c, result);
             }
 
             if (playerBoard.allShipsSunk()) {
                 phase = GamePhase.GAME_OVER;
-                if (turnListener != null) {
-                    turnListener.onGameOver(false);
-                }
+                deleteSave();
+                notifyGameOver(false);
                 return;
             }
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            phase = GamePhase.PLAYER_TURN;
+            return;
+        }
 
-            if (turnListener != null) {
-                turnListener.onEnemyTurnFinished();
-            }
+        phase = GamePhase.PLAYER_TURN;
+        saveGameSafe();
+
+        if (turnListener != null) {
+            turnListener.onEnemyTurnFinished();
         }
     }
+
 
     public void shutdown() {
 
         aiExecutor.shutdownNow();
-    }
-
-    public boolean isPlayerTurn() {
-
-        return playerTurn;
     }
 
     public boolean isGameOver() {
@@ -127,7 +118,6 @@ public class GameController {
 
     public enum GamePhase {
         SETUP,
-        PLAYING,
         PLAYER_TURN, ENEMY_TURN, GAME_OVER
     }
 
@@ -137,7 +127,10 @@ public class GameController {
 
     public void startGame() {
         phase = GamePhase.PLAYER_TURN;
+        notifyPhaseChange();
+        saveGameSafe();
     }
+
 
     public void placeEnemyShipsRandomly() {
         System.out.println("Placing enemy ships...");
@@ -173,11 +166,49 @@ public class GameController {
         GameState state = new GameState(
                 playerBoard,
                 enemyBoard,
-                playerTurn,
-                "Player"
+                phase
+
         );
         SaveManager.saveGame(state, SAVE_FILE);
     }
 
+    public void setPhase(GamePhase phase) {
+        this.phase = phase;
+    }
+    private void notifyPhaseChange() {
+        if (turnListener != null) {
+            turnListener.onEnemyTurnFinished(); // reutilizamos para refrescar UI
+        }
+    }
+
+    private void saveGameSafe() {
+        try {
+            saveGame();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void notifyGameOver(boolean playerWon) {
+        if (turnListener != null) {
+            turnListener.onGameOver(playerWon);
+        }
+    }
+    private void deleteSave() {
+        SaveManager.deleteSave(SAVE_FILE);
+    }
+
+    private void autoSave() {
+        try {
+            saveGame();
+
+            int sunk = enemyBoard.countSunkShips();
+            PlayerRecord record = new PlayerRecord(playerNickname, sunk);
+            SaveManager.savePlayerRecord(record);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

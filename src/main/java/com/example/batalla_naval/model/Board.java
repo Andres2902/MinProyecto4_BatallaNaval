@@ -149,4 +149,14 @@ public class Board implements Serializable {
         return cells.get(key(r,c));
     }
 
+    public int countSunkShips() {
+        int count = 0;
+        for (Ship ship : ships) {
+            if (ship.isSunk()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
 }

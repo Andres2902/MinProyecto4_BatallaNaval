@@ -7,8 +7,10 @@ import java.nio.file.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
+
 public class SaveManager {
     private static final DateTimeFormatter TF = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+    private static final Path PLAYER_FILE = Path.of("saves/player_record.txt");
 
     // serializar GameState a archivo .ser
     public static void saveGame(GameState state, Path file) throws IOException {
@@ -24,11 +26,30 @@ public class SaveManager {
         }
     }
 
-    // archivo plano: registrar resumen del jugador
-    public static void appendPlayerRecord(String playerName, int shipsSunk, Path txtFile) throws IOException {
-        Files.createDirectories(txtFile.getParent());
-        String line = String.format("%s,%s,%d%n", playerName, LocalDateTime.now().format(TF), shipsSunk);
-
-        Files.write(txtFile, line.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    public static void deleteSave(Path file) {
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            System.err.println("Could not delete save file: " + e.getMessage());
+        }
     }
+
+    // archivo plano: registrar resumen del jugador
+    public static void savePlayerRecord(PlayerRecord record) throws IOException {
+        Files.createDirectories(PLAYER_FILE.getParent());
+
+        String line =
+                "Nombre: " + record.getNickname() +
+                        " | Barcos hundidos: " + record.getShipsSunk() +
+                        " | Fecha: " + LocalDateTime.now().format(TF) +
+                        System.lineSeparator();
+
+        Files.writeString(
+                PLAYER_FILE,
+                line,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.APPEND
+        );
+    }
+
 }

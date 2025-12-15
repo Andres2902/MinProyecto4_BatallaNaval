@@ -3,8 +3,6 @@ package com.example.batalla_naval;
 import com.example.batalla_naval.controller.GameController;
 import com.example.batalla_naval.model.Board;
 import com.example.batalla_naval.model.GameState;
-import com.example.batalla_naval.model.Ship;
-import com.example.batalla_naval.model.ShipType;
 import com.example.batalla_naval.persistence.SaveManager;
 import com.example.batalla_naval.view.NavalGameViewController;
 import javafx.application.Application;
@@ -13,16 +11,10 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Main extends Application {
-
-    public static void main(String[] args) {
-        launch(args);
-    }
-
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -34,26 +26,32 @@ public class Main extends Application {
 
         NavalGameViewController controller = loader.getController();
 
-        Board playerBoard = new Board();
-        Board enemyBoard = new Board();
-
-
-        GameController gameController = new GameController(playerBoard, enemyBoard);
-
+        Board playerBoard;
+        Board enemyBoard;
+        GameController gameController;
 
         Path saveFile = Path.of("saves/game_state.ser");
 
         if (Files.exists(saveFile)) {
             GameState state = SaveManager.loadGame(saveFile);
-            if (state != null) {
-                playerBoard = state.getPlayerBoard();
-                enemyBoard = state.getEnemyBoard();
-                gameController = new GameController(playerBoard, enemyBoard);
-            }
+
+            playerBoard = state.getPlayerBoard();
+            enemyBoard = state.getEnemyBoard();
+
+            gameController = new GameController(playerBoard, enemyBoard);
+            gameController.setPhase(state.getPhase());
+
+            System.out.println("Partida cargada");
+        } else {
+            playerBoard = new Board();
+            enemyBoard = new Board();
+            gameController = new GameController(playerBoard, enemyBoard);
+            // phase queda en SETUP
         }
 
         controller.setGameController(gameController);
         gameController.setTurnListener(controller);
+
         controller.renderInitialState();
 
         stage.setTitle("Batalla Naval");
@@ -65,9 +63,11 @@ public class Main extends Application {
                 controller.toggleOrientation();
             }
         });
-
-
     }
 
 
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
