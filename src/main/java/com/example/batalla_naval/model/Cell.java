@@ -32,10 +32,12 @@ public class Cell implements Serializable {
     }
 
     public boolean hasShip() {
+
         return ship != null;
     }
 
     public Ship getShip() {
+
         return ship;
     }
 

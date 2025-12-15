@@ -38,6 +38,7 @@ public class Ship implements Serializable {
     }
 
     public boolean isSunk() { //compara los hits con las posiciones que ocupa el barco
+
         return hits.size() >= positions.size();
     }
 }

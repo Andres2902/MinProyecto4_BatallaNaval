@@ -2,14 +2,39 @@
 
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Label?>
 
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Button?>
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.batalla_naval.view.NavalGameViewController">
+            fx:controller="com.example.batalla_naval.view.NavalGameViewController"
+            prefWidth="700"
+            prefHeight="450">
+
+    <top>
+        <Label fx:id="turnLabel"
+               text="Turno del jugador"
+               style="-fx-font-size: 16px; -fx-padding: 10;" />
+        <ComboBox fx:id="shipSelector" />
+        <CheckBox fx:id="verticalCheck" text="Vertical" />
+        <Button fx:id="startButton" text="startGame" onAction="#startGame"/>
+    </top>
+
 
     <center>
-        <GridPane fx:id="enemyGrid"
-                  hgap="2"
-                  vgap="2"/>
+        <HBox spacing="30" alignment="CENTER">
+
+            <GridPane fx:id="playerGrid"
+                      hgap="2"
+                      vgap="2"/>
+
+            <GridPane fx:id="enemyGrid"
+                      hgap="2"
+                      vgap="2"/>
+
+        </HBox>
     </center>
 
 </BorderPane>

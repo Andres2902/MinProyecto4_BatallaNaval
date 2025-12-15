@@ -145,6 +145,7 @@ public class Board implements Serializable {
     }
 
     public synchronized Cell getCell(int r, int c) {
+
         return cells.get(key(r,c));
     }
 
