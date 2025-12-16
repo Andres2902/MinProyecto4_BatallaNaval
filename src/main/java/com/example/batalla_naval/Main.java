@@ -96,7 +96,7 @@ public class Main extends Application {
 
         NavalGameViewController view = gameLoader.getController();
         view.setGameController(gameController);
-
+        view.setMainApp(this);
         gameController.setTurnListener(view);
 
         view.renderInitialState();
@@ -120,6 +120,43 @@ public class Main extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.show();
+    }
+
+    /**
+     * Muestra la pantalla de bienvenida correctamente configurada.
+     *
+     * @param stage escenario principal
+     */
+    public void showWelcome(Stage stage) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/welcome-view.fxml"));
+            Scene scene = new Scene(loader.load());
+
+            WelcomeViewController controller = loader.getController();
+
+            controller.setOnStartNewGame((name, difficulty) -> {
+                try {
+                    startNewGame(name, difficulty, stage);
+                } catch (Exception e) {
+                    showError("Error", e.getMessage());
+                }
+            });
+
+            controller.setOnLoadGame(() -> {
+                try {
+                    loadGame(stage);
+                } catch (Exception e) {
+                    showError("Error", e.getMessage());
+                }
+            });
+
+            stage.setScene(scene);
+            stage.setTitle("Batalla Naval - Menú");
+            stage.show();
+
+        } catch (IOException e) {
+            showError("Error crítico", e.getMessage());
+        }
     }
 
     public static void main(String[] args) {

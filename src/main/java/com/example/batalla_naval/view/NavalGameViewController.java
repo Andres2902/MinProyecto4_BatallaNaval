@@ -1,5 +1,6 @@
 package com.example.batalla_naval.view;
 
+import com.example.batalla_naval.Main;
 import com.example.batalla_naval.controller.GameController;
 import com.example.batalla_naval.model.*;
 import com.example.batalla_naval.model.Cell;
@@ -39,6 +40,7 @@ public class NavalGameViewController implements TurnListener {
     private GameController gameController;
     private boolean vertical = false;
     private final Set<ShipType> placedShipTypes = new HashSet<>();
+    private Main mainApp;
 
     /**
      * Inicializa la vista y configura los componentes.
@@ -535,21 +537,27 @@ public class NavalGameViewController implements TurnListener {
         this.stage = stage;
     }
 
-    private void returnToMenu() {
-        try {
-            FXMLLoader loader =
-                    new FXMLLoader(getClass().getResource("/welcome-view.fxml"));
-            Scene scene = new Scene(loader.load());
-
-            Stage stage = (Stage) playerGrid.getScene().getWindow();
-
-            stage.setScene(scene);
-            stage.setTitle("Batalla Naval - Menú");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    /**
+     * Establece la referencia a la aplicación principal.
+     *
+     * @param mainApp instancia de Main
+     */
+    public void setMainApp(Main mainApp) {
+        this.mainApp = mainApp;
     }
+
+    /**
+     * Regresa al menú principal del juego.
+     */
+    private void returnToMenu() {
+        if (gameController != null) {
+            gameController.shutdown();
+        }
+
+        Stage stage = (Stage) playerGrid.getScene().getWindow();
+        mainApp.showWelcome(stage);
+    }
+
 
 
     private void toggleDevMode() {
