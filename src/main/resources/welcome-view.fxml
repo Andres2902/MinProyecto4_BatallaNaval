@@ -3,27 +3,44 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<VBox xmlns="http://javafx.com/javafx/21"
+<VBox xmlns="http://javafx.com/javafx/17"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.batalla_naval.view.WelcomeViewController"
       alignment="CENTER"
-      spacing="30"
-      prefHeight="600.0"
-      prefWidth="800.0"
-      style="-fx-background-color: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);">
+      spacing="25"
+      prefWidth="800"
+      prefHeight="600"
+      style="-fx-background-color: linear-gradient(to bottom, #0f172a, #020617);">
 
-    <!-- Title -->
-    <VBox alignment="CENTER" spacing="10">
-        <Label text="⚓"
-               style="-fx-font-size: 80px;">
-        </Label>
-        <Label text="BATALLA NAVAL"
-               style="-fx-text-fill: #00d4ff; -fx-font-size: 48px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #00d4ff, 10, 0.5, 0, 0);">
-        </Label>
-        <Label text="El clásico juego de estrategia naval"
-               style="-fx-text-fill: #a0a0a0; -fx-font-size: 16px;">
-        </Label>
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="⚓"
+           style="-fx-font-size: 72px;" />
+
+    <Label text="BATALLA NAVAL"
+           style="-fx-font-size: 40px; -fx-text-fill: #38bdf8; -fx-font-weight: bold;" />
+
+    <VBox spacing="12" alignment="CENTER">
+        <TextField fx:id="nameField"
+                   promptText="Nombre del jugador"
+                   maxWidth="240" />
+
+        <ComboBox fx:id="difficultyBox"
+                  promptText="Dificultad"
+                  maxWidth="240" />
     </VBox>
+
+    <VBox spacing="12" alignment="CENTER">
+        <Button fx:id="newGameButton"
+                text="Nueva partida"
+                prefWidth="200" />
+
+        <Button fx:id="loadGameButton"
+                text="Cargar partida"
+                prefWidth="200" />
+    </VBox>
+
 </VBox>

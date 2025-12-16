@@ -1,5 +1,6 @@
 package com.example.batalla_naval.controller;
 
+import com.example.batalla_naval.exceptions.InvalidPlacementException;
 import com.example.batalla_naval.model.*;
 import com.example.batalla_naval.persistence.PlayerRecord;
 import com.example.batalla_naval.persistence.SaveManager;
@@ -12,109 +13,180 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Controlador principal del juego que maneja la lógica del flujo del juego,
- * turnos, disparos y comunicación entre modelo y vista.
+ * Controlador principal del juego.
+ * Maneja la lógica del juego, turnos, fases, IA y guardado.
  */
 public class GameController {
-    private final Board playerBoard;
-    private final Board enemyBoard;
-    private GamePhase phase = GamePhase.SETUP;
-    public final ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
-    private final Random random = new Random();
+
+    /* =========================
+       CONSTANTES Y CONFIGURACIÓN
+       ========================= */
+
     private static final Path SAVE_FILE = Path.of("saves/game_state.ser");
-    private String playerNickname = "Player1";
+
+    /* =========================
+       ESTADO DEL JUEGO
+       ========================= */
+
+    private Board playerBoard;
+    private Board enemyBoard;
+    private GamePhase phase = GamePhase.SETUP;
+
+    private String playerNickname = "Jugador";
+    private Difficulty difficulty = Difficulty.EASY;
+
+    /* =========================
+       IA
+       ========================= */
+
+    private final ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
+    private final Random random = new Random();
+
+    /* =========================
+       LISTENERS
+       ========================= */
+
     private TurnListener turnListener;
 
     /**
-     * Constructor del controlador de juego.
+     * Crea un nuevo controlador del juego.
      *
-     * @param playerBoard Tablero del jugador
-     * @param enemyBoard Tablero del enemigo
+     * @param playerBoard tablero del jugador
+     * @param enemyBoard tablero del enemigo
      */
     public GameController(Board playerBoard, Board enemyBoard) {
         this.playerBoard = playerBoard;
         this.enemyBoard = enemyBoard;
     }
 
+    /* =========================
+       CONFIGURACIÓN INICIAL
+       ========================= */
+
     /**
-     * @return true si es el turno del jugador
+     * Establece el nombre del jugador.
+     *
+     * @param nickname nombre ingresado en la pantalla de bienvenida
      */
+    public void setPlayerNickname(String nickname) {
+        this.playerNickname = nickname;
+    }
+
+    /**
+     * Establece la dificultad del juego.
+     *
+     * @param difficulty dificultad seleccionada
+     */
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    /**
+     * Asigna el listener de turnos.
+     *
+     * @param listener listener de la vista
+     */
+    public void setTurnListener(TurnListener listener) {
+        this.turnListener = listener;
+    }
+
+    /* =========================
+       FASES Y TURNOS
+       ========================= */
+
     public boolean isPlayerTurn() {
         return phase == GamePhase.PLAYER_TURN;
     }
 
+    public GamePhase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(GamePhase phase) {
+        this.phase = phase;
+    }
+
+    /**
+     * Inicia la partida después de la fase de colocación.
+     */
+    public void startGame() {
+        placeEnemyShipsRandomly();
+        phase = GamePhase.PLAYER_TURN;
+        saveGameSafe();
+        notifyTurnFinished();
+    }
+
+    /* =========================
+       DISPARO DEL JUGADOR
+       ========================= */
+
     /**
      * Procesa un disparo del jugador.
      *
-     * @param row Fila del disparo
-     * @param col Columna del disparo
-     * @return Resultado del disparo
-     * @throws IllegalStateException Si no es el turno del jugador
+     * @param row fila
+     * @param col columna
+     * @return resultado del disparo
      */
     public synchronized ShotResult playerShoots(int row, int col) {
+
         if (phase != GamePhase.PLAYER_TURN) {
             throw new IllegalStateException("No es el turno del jugador");
         }
 
         ShotResult result = enemyBoard.shootAt(row, col);
+        System.out.println("Jugador disparó: " + result);
 
-        // Verificar si el juego terminó
         if (enemyBoard.allShipsSunk()) {
-            phase = GamePhase.GAME_OVER;
-            deleteSave();
-            notifyGameOver(true);
+            endGame(true);
             return result;
         }
 
-        // Manejar cambio de turno
         if (result == ShotResult.MISS) {
             phase = GamePhase.ENEMY_TURN;
             autoSave();
             aiExecutor.submit(this::aiPlay);
         } else {
-            // El jugador sigue si acertó
             autoSave();
         }
 
         return result;
     }
 
-    /**
-     * Establece el listener para notificaciones de turno.
-     *
-     * @param listener Listener a establecer
-     */
-    public void setTurnListener(TurnListener listener) {
-        this.turnListener = listener;
-    }
+    /* =========================
+       IA DEL ENEMIGO
+       ========================= */
 
     /**
-     * Lógica simple de IA para el turno del enemigo.
-     * Dispara a una celda aleatoria no disparada previamente.
+     * Ejecuta el turno de la IA según la dificultad.
      */
     private void aiPlay() {
         try {
-            Thread.sleep(700); // Pausa para simular pensamiento
+            boolean aiContinues = true;
 
-            int r, c;
-            do {
-                r = random.nextInt(Board.SIZE);
-                c = random.nextInt(Board.SIZE);
-            } while (playerBoard.getCell(r, c).wasShot());
+            while (aiContinues && phase == GamePhase.ENEMY_TURN) {
 
-            ShotResult result = playerBoard.shootAt(r, c);
-            autoSave();
+                Thread.sleep(700);
 
-            if (turnListener != null) {
-                turnListener.onEnemyShot(r, c, result);
-            }
+                int[] shot = decideAiShot();
+                int r = shot[0];
+                int c = shot[1];
 
-            // Verificar si el juego terminó
-            if (playerBoard.allShipsSunk()) {
-                phase = GamePhase.GAME_OVER;
-                deleteSave();
-                notifyGameOver(false);
-                return;
+                ShotResult result = playerBoard.shootAt(r, c);
+                autoSave();
+
+                if (turnListener != null) {
+                    turnListener.onEnemyShot(r, c, result);
+                }
+
+                if (playerBoard.allShipsSunk()) {
+                    endGame(false);
+                    return;
+                }
+
+                // 🔑 regla clave
+                if (result == ShotResult.MISS) {
+                    aiContinues = false;
+                }
             }
 
         } catch (InterruptedException e) {
@@ -122,119 +194,59 @@ public class GameController {
             return;
         }
 
-        // Cambiar de vuelta al turno del jugador
         phase = GamePhase.PLAYER_TURN;
         saveGameSafe();
-
-        if (turnListener != null) {
-            turnListener.onEnemyTurnFinished();
-        }
+        notifyTurnFinished();
     }
 
+    public String getPlayerNickname() { return playerNickname; }
+    public Difficulty getDifficulty() { return difficulty; }
+
+
     /**
-     * Apaga el executor de la IA.
+     * Decide el disparo de la IA según la dificultad.
+     *
+     * @return arreglo {fila, columna}
      */
+    private int[] decideAiShot() {
+        
+        int r, c;
+        do {
+            r = random.nextInt(Board.SIZE);
+            c = random.nextInt(Board.SIZE);
+        } while (playerBoard.getCell(r, c).wasShot());
+
+        return new int[]{r, c};
+    }
+
+    /* =========================
+       FINALIZACIÓN
+       ========================= */
+
+    /**
+     * Finaliza el juego y notifica a la vista.
+     *
+     * @param playerWon true si ganó el jugador
+     */
+    private void endGame(boolean playerWon) {
+        phase = GamePhase.GAME_OVER;
+        deleteSave();
+        notifyGameOver(playerWon);
+    }
+
     public void shutdown() {
         aiExecutor.shutdownNow();
     }
 
-    /**
-     * @return true si el juego ha terminado
-     */
-    public boolean isGameOver() {
-        return playerBoard.allShipsSunk() || enemyBoard.allShipsSunk();
-    }
+    /* =========================
+       GUARDADO
+       ========================= */
 
-    /**
-     * @return Tablero del jugador
-     */
-    public Board getPlayerBoard() {
-        return playerBoard;
-    }
-
-    /**
-     * @return Tablero del enemigo
-     */
-    public Board getEnemyBoard() {
-        return enemyBoard;
-    }
-
-    /**
-     * Fases posibles del juego.
-     */
-    public enum GamePhase {
-        SETUP,
-        PLAYER_TURN,
-        ENEMY_TURN,
-        GAME_OVER
-    }
-
-    /**
-     * @return Fase actual del juego
-     */
-    public GamePhase getPhase() {
-        return phase;
-    }
-
-    /**
-     * Inicia el juego cambiando a la fase de turno del jugador.
-     */
-    public void startGame() {
-        phase = GamePhase.PLAYER_TURN;
-        notifyPhaseChange();
-        saveGameSafe();
-    }
-
-    /**
-     * Coloca aleatoriamente los barcos del enemigo.
-     */
-    public void placeEnemyShipsRandomly() {
-        System.out.println("Colocando barcos enemigos...");
-        Random random = new Random();
-
-        for (ShipType type : ShipType.values()) {
-            boolean placed = false;
-            while (!placed) {
-                int r = random.nextInt(Board.SIZE);
-                int c = random.nextInt(Board.SIZE);
-                boolean vertical = random.nextBoolean();
-
-                try {
-                    Ship ship = new Ship(type);
-                    enemyBoard.placeShip(ship, r, c, vertical);
-                    placed = true;
-                } catch (Exception ignored) {
-                    // Continuar intentando
-                }
-            }
-        }
-
-        System.out.println("=== TABLERO ENEMIGO (DEBUG) ===");
-        enemyBoard.printBoard(true);
-    }
-
-    /**
-     * Establece la fase del juego.
-     *
-     * @param phase Nueva fase del juego
-     */
-    public void setPhase(GamePhase phase) {
-        this.phase = phase;
-    }
-
-    /**
-     * Guarda el estado actual del juego.
-     *
-     * @throws IOException Si ocurre un error al guardar
-     */
     private void saveGame() throws IOException {
         GameState state = new GameState(playerBoard, enemyBoard, phase);
         SaveManager.saveGame(state, SAVE_FILE);
     }
 
-    /**
-     * Guarda el juego de forma segura (maneja excepciones internamente).
-     */
     private void saveGameSafe() {
         try {
             saveGame();
@@ -243,44 +255,83 @@ public class GameController {
         }
     }
 
-    /**
-     * Guarda automáticamente el juego y registra estadísticas.
-     */
     private void autoSave() {
         try {
             saveGame();
-            int sunk = enemyBoard.countSunkShips();
-            PlayerRecord record = new PlayerRecord(playerNickname, sunk);
+            PlayerRecord record =
+                    new PlayerRecord(playerNickname, enemyBoard.countSunkShips());
             SaveManager.savePlayerRecord(record);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Elimina el archivo de guardado.
-     */
     private void deleteSave() {
         SaveManager.deleteSave(SAVE_FILE);
     }
 
-    /**
-     * Notifica a la vista el cambio de fase.
-     */
-    private void notifyPhaseChange() {
+    /* =========================
+       NOTIFICACIONES
+       ========================= */
+
+    private void notifyTurnFinished() {
         if (turnListener != null) {
             turnListener.onEnemyTurnFinished();
         }
     }
 
-    /**
-     * Notifica a la vista que el juego ha terminado.
-     *
-     * @param playerWon true si el jugador ganó
-     */
     private void notifyGameOver(boolean playerWon) {
         if (turnListener != null) {
             turnListener.onGameOver(playerWon);
         }
+    }
+
+    /* =========================
+       GETTERS
+       ========================= */
+
+    public Board getPlayerBoard() {
+        return playerBoard;
+    }
+
+    public Board getEnemyBoard() {
+        return enemyBoard;
+    }
+
+    /**
+     * Coloca todos los barcos del enemigo de forma aleatoria en su tablero.
+     */
+    public void placeEnemyShipsRandomly() {
+
+        for (ShipType type : ShipType.values()) {
+            boolean placed = false;
+
+            while (!placed) {
+                int row = random.nextInt(Board.SIZE);
+                int col = random.nextInt(Board.SIZE);
+                boolean vertical = random.nextBoolean();
+
+                Ship ship = new Ship(type);
+
+                try {
+                    enemyBoard.placeShip(ship, row, col, vertical);
+                    placed = true;
+                } catch (InvalidPlacementException ignored) {
+                    // Se reintenta hasta encontrar una posición válida
+                }
+            }
+        }
+    }
+
+
+    /* =========================
+       ENUM DE FASES
+       ========================= */
+
+    public enum GamePhase {
+        SETUP,
+        PLAYER_TURN,
+        ENEMY_TURN,
+        GAME_OVER
     }
 }

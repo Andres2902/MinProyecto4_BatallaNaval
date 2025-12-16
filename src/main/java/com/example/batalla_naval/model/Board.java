@@ -129,11 +129,16 @@ public class Board implements Serializable {
      * @return true si todos los barcos han sido hundidos
      */
     public boolean allShipsSunk() {
+        if (ships.isEmpty()) {
+            return false;
+        }
+
         for (Ship s : ships) {
             if (!s.isSunk()) return false;
         }
         return true;
     }
+
 
     /**
      * Imprime el tablero en consola (para debugging).

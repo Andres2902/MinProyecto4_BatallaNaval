@@ -85,6 +85,24 @@
                     text="Iniciar Juego"
                     prefWidth="160"
                     style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+
+            <Separator />
+
+            <Label text="Opciones de juego"
+                   style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+
+            <Button fx:id="restartButton"
+                    text="Reiniciar partida"
+                    prefWidth="160" />
+
+            <Button fx:id="menuButton"
+                    text="Volver al menú"
+                    prefWidth="160" />
+
+            <ToggleButton fx:id="devModeButton"
+                          text="Modo developer"
+                          prefWidth="160" />
+
         </VBox>
     </right>
 

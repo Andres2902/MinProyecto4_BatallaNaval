@@ -2,77 +2,126 @@ package com.example.batalla_naval;
 
 import com.example.batalla_naval.controller.GameController;
 import com.example.batalla_naval.model.Board;
+import com.example.batalla_naval.model.Difficulty;
 import com.example.batalla_naval.model.GameState;
 import com.example.batalla_naval.persistence.SaveManager;
 import com.example.batalla_naval.view.NavalGameViewController;
+import com.example.batalla_naval.view.WelcomeViewController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Clase principal de la aplicación JavaFX.
- * Inicializa el juego y carga la interfaz gráfica.
- */
+import static com.example.batalla_naval.persistence.SaveManager.loadGame;
+
 public class Main extends Application {
 
-    /**
-     * Metodo principal de inicio de la aplicación JavaFX.
-     *
-     * @param stage Escenario principal
-     * @throws Exception Si ocurre un error durante la inicialización
-     */
+    private GameController gameController;
+    private Board playerBoard;
+    private Board enemyBoard;
+
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/naval-game-view.fxml"));
-        Scene scene = new Scene(loader.load());
+        // Cargar la pantalla de bienvenida
+        FXMLLoader welcomeLoader = new FXMLLoader(getClass().getResource("/welcome-view.fxml"));
+        Scene welcomeScene = new Scene(welcomeLoader.load());
+        WelcomeViewController welcomeController = welcomeLoader.getController();
 
-        NavalGameViewController controller = loader.getController();
-
-        Board playerBoard;
-        Board enemyBoard;
-        GameController gameController;
-        Path saveFile = Path.of("saves/game_state.ser");
-
-        // Intentar cargar partida guardada
-        if (Files.exists(saveFile)) {
-            GameState state = SaveManager.loadGame(saveFile);
-            playerBoard = state.getPlayerBoard();
-            enemyBoard = state.getEnemyBoard();
-            gameController = new GameController(playerBoard, enemyBoard);
-            gameController.setPhase(state.getPhase());
-            System.out.println("Partida cargada");
-        } else {
-            playerBoard = new Board();
-            enemyBoard = new Board();
-            gameController = new GameController(playerBoard, enemyBoard);
-        }
-
-        controller.setGameController(gameController);
-        gameController.setTurnListener(controller);
-        controller.renderInitialState();
-
-        stage.setTitle("Batalla Naval");
-        stage.setScene(scene);
-        stage.show();
-
-        // Configurar atajo de teclado para rotar barcos
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.R) {
-                controller.toggleOrientation();
+        // Cuando el usuario presiona "Iniciar nueva partida" o "Cargar partida"
+        welcomeController.setOnStartNewGame((playerName, difficulty) -> {
+            try {
+                startNewGame(playerName, difficulty, stage);
+            } catch (Exception e) {
+                showError("Error", e.getMessage());
             }
         });
+
+        welcomeController.setOnLoadGame(() -> {
+            try {
+                loadGame(stage);
+            } catch (Exception e) {
+                showError("Error", e.getMessage());
+            }
+        });
+
+
+
+
+        stage.setTitle("Batalla Naval - Bienvenida");
+        stage.setScene(welcomeScene);
+        stage.show();
     }
 
+    private void startNewGame(String playerName, Difficulty difficulty, Stage stage) throws IOException {
+        Path saveFile = Path.of("saves/game_state.ser");
+
+        SaveManager.deleteSave(saveFile);
+
+        Board playerBoard = new Board();
+        Board enemyBoard = new Board();
+
+        gameController = new GameController(playerBoard, enemyBoard);
+        gameController.setPlayerNickname(playerName);
+        gameController.setDifficulty(difficulty);
+        loadGameScene(stage);
+    }
+
+    private void loadGame(Stage stage) throws IOException, ClassNotFoundException {
+        Path saveFile = Path.of("saves/game_state.ser");
+
+        if (!Files.exists(saveFile)) {
+            showError("No hay partida guardada", "No existe una partida para cargar.");
+            return;
+        }
+
+        GameState state = SaveManager.loadGame(saveFile);
+
+        gameController = new GameController(
+                state.getPlayerBoard(),
+                state.getEnemyBoard()
+        );
+        gameController.setPhase(state.getPhase());
+
+        loadGameScene(stage);
+    }
+
+    private void loadGameScene(Stage stage) throws IOException {
+        FXMLLoader gameLoader = new FXMLLoader(getClass().getResource("/naval-game-view.fxml"));
+        Scene gameScene = new Scene(gameLoader.load());
+
+        NavalGameViewController view = gameLoader.getController();
+        view.setGameController(gameController);
+
+        gameController.setTurnListener(view);
+
+        view.renderInitialState();
+
+        stage.setScene(gameScene);
+        stage.setTitle("Batalla Naval");
+        stage.show();
+    }
+
+
     /**
-     * Metodo main que lanza la aplicación.
+     * Muestra un mensaje de error crítico.
      *
-     * @param args Argumentos de línea de comandos
+     * @param title título del error
+     * @param message mensaje detallado
      */
+    private void showError(String title, String message) {
+        javafx.scene.control.Alert alert =
+                new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.show();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }

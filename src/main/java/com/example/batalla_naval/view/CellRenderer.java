@@ -71,4 +71,14 @@ public class CellRenderer {
         l2.setStrokeWidth(3);
         cell.getChildren().addAll(l1, l2);
     }
+    public static void drawPreview(StackPane cell) {
+        Rectangle bg = (Rectangle) cell.getChildren().get(0);
+        bg.setFill(Color.rgb(34, 197, 94, 0.5));
+    }
+
+    public static void clearPreview(StackPane cell, boolean hasShip) {
+        Rectangle bg = (Rectangle) cell.getChildren().get(0);
+        bg.setFill(hasShip ? Color.DARKGRAY : Color.LIGHTBLUE);
+    }
+
 }
