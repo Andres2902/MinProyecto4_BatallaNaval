@@ -2,18 +2,26 @@ package com.example.batalla_naval.model;
 
 import com.example.batalla_naval.exceptions.GameStateException;
 import com.example.batalla_naval.exceptions.InvalidPlacementException;
-import  com.example.batalla_naval.exceptions.*;
+
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * Representa el tablero de juego de batalla naval.
+ * Contiene celdas, barcos y maneja la lógica de colocación y disparos.
+ */
 public class Board implements Serializable {
-    public static int SIZE = 10;
+    /** Tamaño del tablero (cuadrado) */
+    public static final int SIZE = 10;
 
-    private  Map<String, Cell> cells = new HashMap<>(); // key "r,c"
-    private  List<Ship> ships = new ArrayList<>();
-    private  Set<String> occupied = new HashSet<>(); // posiciones con barco
-    private  LinkedList<String> shotsHistory = new LinkedList<>();
+    private final Map<String, Cell> cells = new HashMap<>();
+    private final List<Ship> ships = new ArrayList<>();
+    private final Set<String> occupied = new HashSet<>();
+    private final LinkedList<String> shotsHistory = new LinkedList<>();
 
+    /**
+     * Constructor que inicializa un tablero vacío.
+     */
     public Board() {
         for (int r = 0; r < SIZE; r++) {
             for (int c = 0; c < SIZE; c++) {
@@ -22,54 +30,60 @@ public class Board implements Serializable {
         }
     }
 
+    /**
+     * Genera una clave única para una celda.
+     *
+     * @param r Fila
+     * @param c Columna
+     * @return Clave en formato "fila,columna"
+     */
     private static String key(int r, int c) {
         return r + "," + c;
     }
 
-    // Comprueba si una coordenada está en rango
+    /**
+     * Verifica si las coordenadas están dentro del tablero.
+     *
+     * @param r Fila a verificar
+     * @param c Columna a verificar
+     * @return true si las coordenadas son válidas
+     */
     private boolean inRange(int r, int c) {
         return (r >= 0 && r < SIZE) && (c >= 0 && c < SIZE);
     }
 
     /**
-     * placeShip: intenta colocar un barco en el tablero.
-     * @param ship Ship a colocar (debe tener tipo con tamaño)
-     * @param startR fila inicial
-     * @param startC col inicial
-     * @param vertical true si vertical, false si horizontal
-     * @throws InvalidPlacementException si no cabe o hay otro ocupando el lugar
+     * Coloca un barco en el tablero.
+     *
+     * @param ship Barco a colocar
+     * @param startR Fila inicial
+     * @param startC Columna inicial
+     * @param vertical true para orientación vertical, false para horizontal
+     * @throws InvalidPlacementException Si el barco no cabe o se superpone con otro
      */
     public void placeShip(Ship ship, int startR, int startC, boolean vertical) throws InvalidPlacementException {
         int size = ship.getType().getSize();
-
-        // calcular coordenadas que ocuparía
         List<String> positions = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            int r;
-            int c;
 
-            if (vertical) {
-                r = startR + i;
-                c = startC;
-            } else {
-                r = startR; // startR + 0
-                c = startC + i;
-            }
+        // Calcular posiciones que ocuparía el barco
+        for (int i = 0; i < size; i++) {
+            int r = vertical ? startR + i : startR;
+            int c = vertical ? startC : startC + i;
+
             if (!inRange(r, c)) {
-                throw new InvalidPlacementException("Ship out of bounds at " + r + "," + c);
+                throw new InvalidPlacementException("Barco fuera de límites en " + r + "," + c);
             }
             positions.add(key(r, c));
         }
 
-        // comprobar Superposicion con occupied
-        for (int i = 0; i < positions.size(); i++) {
-            String pos = positions.get(i);
+        // Verificar superposición
+        for (String pos : positions) {
             if (occupied.contains(pos)) {
-                throw new InvalidPlacementException("Ship overlaps at " + pos);
+                throw new InvalidPlacementException("Barco se superpone en " + pos);
             }
         }
 
-        // si validado, asignar el ship a celdas y actualizar estructuras
+        // Colocar el barco
         for (String pos : positions) {
             Cell cell = cells.get(pos);
             cell.setShip(ship);
@@ -80,19 +94,25 @@ public class Board implements Serializable {
     }
 
     /**
-     * shootAt: dispara a la celda (r,c).
-     * Si ya fue disparada lanza GameStateException.
-     * Retorna ShotResult: MISS, HIT, SUNK
+     * Realiza un disparo en el tablero.
+     *
+     * @param r Fila del disparo
+     * @param c Columna del disparo
+     * @return Resultado del disparo (MISS, HIT, o SUNK)
+     * @throws GameStateException Si las coordenadas son inválidas o ya se disparó allí
      */
     public synchronized ShotResult shootAt(int r, int c) {
         if (!inRange(r, c)) {
-            throw new GameStateException("Shot out of bounds: " + r + "," + c);
+            throw new GameStateException("Disparo fuera de límites: " + r + "," + c);
         }
+
         String pos = key(r, c);
         Cell cell = cells.get(pos);
+
         if (cell.wasShot()) {
-            throw new GameStateException("Cell already shot: " + pos);
+            throw new GameStateException("Celda ya disparada: " + pos);
         }
+
         cell.markShot();
         shotsHistory.addFirst(pos);
 
@@ -101,14 +121,13 @@ public class Board implements Serializable {
         } else {
             Ship ship = cell.getShip();
             ship.registerHit(pos);
-            if (ship.isSunk()) {
-                return ShotResult.SUNK;
-            } else {
-                return ShotResult.HIT;
-            }
+            return ship.isSunk() ? ShotResult.SUNK : ShotResult.HIT;
         }
     }
 
+    /**
+     * @return true si todos los barcos han sido hundidos
+     */
     public boolean allShipsSunk() {
         for (Ship s : ships) {
             if (!s.isSunk()) return false;
@@ -116,39 +135,62 @@ public class Board implements Serializable {
         return true;
     }
 
-    //Vista en consola del tablero
+    /**
+     * Imprime el tablero en consola (para debugging).
+     *
+     * @param showShips true para mostrar barcos no disparados
+     */
     public void printBoard(boolean showShips) {
         System.out.print("  ");
         for (int c = 0; c < SIZE; c++) System.out.print(c + " ");
         System.out.println();
+
         for (int r = 0; r < SIZE; r++) {
             System.out.print(r + " ");
             for (int c = 0; c < SIZE; c++) {
                 Cell cell = cells.get(key(r, c));
                 char ch = '.';
                 if (cell.wasShot()) {
-                    if (cell.hasShip()) ch = 'X';
-                    else ch = 'o';
-                } else if (showShips && cell.hasShip()) ch = 'S';
+                    ch = cell.hasShip() ? 'X' : 'o';
+                } else if (showShips && cell.hasShip()) {
+                    ch = 'S';
+                }
                 System.out.print(ch + " ");
             }
             System.out.println();
         }
     }
 
+    /**
+     * @return Historial de disparos (más recientes primero)
+     */
     public List<String> getShotsHistory() {
         return new ArrayList<>(shotsHistory);
     }
 
+    /**
+     * @return Lista de todos los barcos en el tablero
+     */
     public List<Ship> getShips() {
         return ships;
     }
 
+    /**
+     * Obtiene una celda específica.
+     *
+     * @param r Fila
+     * @param c Columna
+     * @return La celda en las coordenadas especificadas
+     */
     public synchronized Cell getCell(int r, int c) {
-
-        return cells.get(key(r,c));
+        return cells.get(key(r, c));
     }
 
+    /**
+     * Cuenta cuántos barcos han sido hundidos.
+     *
+     * @return Número de barcos hundidos
+     */
     public int countSunkShips() {
         int count = 0;
         for (Ship ship : ships) {
@@ -158,5 +200,4 @@ public class Board implements Serializable {
         }
         return count;
     }
-
 }

@@ -1,40 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.Label?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.Button?>
-<BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.batalla_naval.view.NavalGameViewController"
-            prefWidth="700"
-            prefHeight="450">
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.batalla_naval.view.NavalGameViewController">
 
+    <!-- =====================
+         TOP BAR
+         ===================== -->
     <top>
-        <Label fx:id="turnLabel"
-               text="Turno del jugador"
-               style="-fx-font-size: 16px; -fx-padding: 10;" />
-        <ComboBox fx:id="shipSelector" />
-        <CheckBox fx:id="verticalCheck" text="Vertical" />
-        <Button fx:id="startButton" text="startGame" onAction="#startGame"/>
+        <VBox spacing="8" style="-fx-background-color: #1e293b;">
+            <padding>
+                <Insets top="12" right="12" bottom="12" left="12"/>
+            </padding>
+
+            <Label text="BATALLA NAVAL"
+                   style="-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;" />
+            <Label fx:id="turnLabel" text="Coloca tus barcos"
+                   style="-fx-text-fill: #e5e7eb; -fx-font-size: 14px;" />
+        </VBox>
     </top>
 
-
+    <!-- =====================
+         CENTER AREA
+         ===================== -->
     <center>
         <HBox spacing="30" alignment="CENTER">
+            <padding>
+                <Insets top="12" right="12" bottom="12" left="12"/>
+            </padding>
 
-            <GridPane fx:id="playerGrid"
-                      hgap="2"
-                      vgap="2"/>
+            <!-- PLAYER BOARD -->
+            <VBox spacing="10" alignment="CENTER">
+                <Label text="Tu Tablero"
+                       style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                <GridPane fx:id="playerGrid"
+                          hgap="1" vgap="1"
+                          style="-fx-background-color: black; -fx-padding: 4;" />
+            </VBox>
 
-            <GridPane fx:id="enemyGrid"
-                      hgap="2"
-                      vgap="2"/>
+            <!-- ENEMY BOARD -->
+            <VBox spacing="10" alignment="CENTER">
+                <Label text="Tablero Enemigo"
+                       style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                <GridPane fx:id="enemyGrid"
+                          hgap="1" vgap="1"
+                          style="-fx-background-color: black; -fx-padding: 4;" />
+            </VBox>
 
         </HBox>
     </center>
+
+    <!-- =====================
+         RIGHT CONTROL PANEL
+         ===================== -->
+    <right>
+        <VBox spacing="15"
+              alignment="TOP_CENTER"
+              style="-fx-background-color: #f1f5f9; -fx-border-color: #cbd5e1;">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="Configuración"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold;" />
+
+            <Separator />
+
+            <Label text="Tipo de barco" />
+            <ComboBox fx:id="shipSelector" prefWidth="160" />
+
+            <CheckBox fx:id="verticalCheck" text="Colocar vertical" />
+
+            <Label text="(Tecla R para rotar)"
+                   style="-fx-font-size: 11px; -fx-text-fill: #475569;" />
+
+            <Separator />
+
+            <Button fx:id="startButton"
+                    text="Iniciar Juego"
+                    prefWidth="160"
+                    style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+        </VBox>
+    </right>
+
+    <!-- =====================
+         FOOTER
+         ===================== -->
+    <bottom>
+        <HBox alignment="CENTER"
+              style="-fx-background-color: #e5e7eb;">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <Label text="Proyecto Batalla Naval – Programación Orientada a Objetos"
+                   style="-fx-font-size: 11px; -fx-text-fill: #374151;" />
+        </HBox>
+    </bottom>
 
 </BorderPane>

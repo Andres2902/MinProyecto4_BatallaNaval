@@ -1,42 +1,45 @@
 package com.example.batalla_naval.view;
 
+import com.example.batalla_naval.controller.GameController;
 import com.example.batalla_naval.model.*;
+import com.example.batalla_naval.model.Cell;
+import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 
-import com.example.batalla_naval.controller.GameController;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Controlador de la vista principal del juego.
+ * Maneja la interfaz de usuario y la interacción con el controlador del juego.
+ */
 public class NavalGameViewController implements TurnListener {
 
-    @FXML
-    private GridPane enemyGrid;
-
-    @FXML
-    private GridPane playerGrid;
+    @FXML private GridPane enemyGrid;
+    @FXML private GridPane playerGrid;
+    @FXML private Label turnLabel;
+    @FXML private ComboBox<ShipType> shipSelector;
+    @FXML private CheckBox verticalCheck;
+    @FXML private Button startButton;
 
     private GameController gameController;
+    private boolean vertical = false;
+    private final Set<ShipType> placedShipTypes = new HashSet<>();
 
-    @FXML
-    private Label turnLabel;
-
-
+    /**
+     * Inicializa la vista y configura los componentes.
+     */
     @FXML
     public void initialize() {
         createPlayerBoard();
         createEnemyBoard();
 
+        // Configurar selector de barcos
         shipSelector.getItems().addAll(ShipType.values());
         shipSelector.setValue(ShipType.values()[0]);
 
@@ -50,21 +53,28 @@ public class NavalGameViewController implements TurnListener {
                 selectNextAvailableShip();
             }
         });
-
     }
+
+    /**
+     * Inicia el juego colocando barcos enemigos y cambiando a fase de juego.
+     */
     @FXML
     private void startGame() {
-        System.out.println("START GAME PRESSED");
+        System.out.println("INICIAR JUEGO PRESIONADO");
 
         gameController.placeEnemyShipsRandomly();
         gameController.startGame();
         turnLabel.setText("Turno del jugador");
 
+        // Deshabilitar controles de configuración
         shipSelector.setDisable(true);
         verticalCheck.setDisable(true);
         startButton.setDisable(true);
     }
 
+    /**
+     * Selecciona el siguiente barco disponible para colocar.
+     */
     private void selectNextAvailableShip() {
         for (ShipType type : ShipType.values()) {
             if (!placedShipTypes.contains(type)) {
@@ -74,8 +84,13 @@ public class NavalGameViewController implements TurnListener {
         }
     }
 
+    /**
+     * Maneja el clic en una celda del tablero enemigo.
+     *
+     * @param r Fila de la celda
+     * @param c Columna de la celda
+     */
     private void onEnemyCellClicked(int r, int c) {
-
         if (gameController.getPhase() != GameController.GamePhase.PLAYER_TURN) {
             return;
         }
@@ -89,63 +104,78 @@ public class NavalGameViewController implements TurnListener {
         }
     }
 
-
+    /**
+     * Renderiza el resultado de un disparo en el tablero enemigo.
+     *
+     * @param r Fila
+     * @param c Columna
+     * @param result Resultado del disparo
+     */
     private void renderShotResultOnPane(int r, int c, ShotResult result) {
-
-        StackPane pane = (StackPane) enemyGrid.getChildren().get(r * 10 + c);
-        CellRenderer.drawWater(pane);
+        StackPane cellPane = (StackPane) enemyGrid.getChildren().get(r * 10 + c);
+        cellPane.getChildren().clear();
 
         switch (result) {
-            case HIT -> CellRenderer.drawHit(pane);
-            case MISS -> CellRenderer.drawMiss(pane);
+            case HIT -> {
+                cellPane.setStyle("-fx-background-color: #ef4444; -fx-border-color: black;");
+                playHitAnimation(cellPane);
+            }
+            case MISS -> cellPane.setStyle("-fx-background-color: #94a3b8; -fx-border-color: black;");
             case SUNK -> {
-                CellRenderer.drawHit(pane);
-                CellRenderer.drawSunk(pane);
+                cellPane.setStyle("-fx-background-color: #7f1d1d; -fx-border-color: black;");
+                playHitAnimation(cellPane);
             }
         }
+        cellPane.setDisable(true);
     }
 
-
-
-    public void setGameController(GameController gameController){
-
+    /**
+     * Establece el controlador del juego.
+     *
+     * @param gameController Controlador del juego
+     */
+    public void setGameController(GameController gameController) {
         this.gameController = gameController;
     }
 
     @Override
     public void onEnemyTurnFinished() {
-        Platform.runLater(() -> {
-            updateUIForPhase();
-        });
+        Platform.runLater(this::updateUIForPhase);
     }
-
 
     @Override
     public void onEnemyShot(int row, int col, ShotResult result) {
-    Platform.runLater(() -> renderEnemyShot(row, col, result));
+        Platform.runLater(() -> renderEnemyShot(row, col, result));
     }
 
-    private void createPlayerBoard() {
+    @Override
+    public void onGameOver(boolean playerWon) {
+        Platform.runLater(() -> {
+            updateUIForPhase();
+            turnLabel.setText(playerWon ? "¡GANASTE!" : "PERDISTE");
+        });
+    }
 
+    /**
+     * Crea el tablero del jugador.
+     */
+    private void createPlayerBoard() {
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
-
-
                 StackPane cell = new StackPane();
                 CellRenderer.drawWater(cell);
                 cell.setPrefSize(32, 32);
 
-                int rr = r;
-                int cc = c;
-                cell.setOnMouseClicked(e -> onPlayerCellClicked(rr, cc));
+                final int rr = r;
+                final int cc = c;
 
+                cell.setOnMouseClicked(e -> onPlayerCellClicked(rr, cc));
                 cell.setOnMouseEntered(e -> {
                     if (gameController.getPhase() == GameController.GamePhase.SETUP
                             && shipSelector.getValue() != null) {
                         showShipPreview(rr, cc);
                     }
                 });
-
                 cell.setOnMouseExited(e -> {
                     if (gameController.getPhase() == GameController.GamePhase.SETUP) {
                         clearShipPreview();
@@ -153,87 +183,67 @@ public class NavalGameViewController implements TurnListener {
                 });
 
                 playerGrid.add(cell, c, r);
-
-
             }
         }
     }
+
+    /**
+     * Crea el tablero del enemigo.
+     */
     private void createEnemyBoard() {
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
-
                 StackPane cell = new StackPane();
                 CellRenderer.drawWater(cell);
-
                 cell.setPrefSize(32, 32);
 
-                int rr = r;
-                int cc = c;
+                final int rr = r;
+                final int cc = c;
                 cell.setOnMouseClicked(e -> onEnemyCellClicked(rr, cc));
-
                 enemyGrid.add(cell, c, r);
             }
         }
     }
+
+    /**
+     * Renderiza un disparo enemigo en el tablero del jugador.
+     *
+     * @param r Fila
+     * @param c Columna
+     * @param result Resultado del disparo
+     */
     private void renderEnemyShot(int r, int c, ShotResult result) {
+        StackPane cell = (StackPane) playerGrid.getChildren().get(r * 10 + c);
 
-        StackPane pane = (StackPane) playerGrid.getChildren().get(r * 10 + c);
-        CellRenderer.drawWater(pane);
-
-        if (gameController.getPlayerBoard().getCell(r, c).hasShip()) {
-            CellRenderer.drawShip(pane);
+        switch (result) {
+            case HIT -> {
+                cell.setStyle("-fx-background-color: #ef4444; -fx-border-color: black;");
+                playHitAnimation(cell);
+            }
+            case MISS -> cell.setStyle("-fx-background-color: #94a3b8; -fx-border-color: black;");
+            case SUNK -> {
+                cell.setStyle("-fx-background-color: #7f1d1d; -fx-border-color: black;");
+                playHitAnimation(cell);
+            }
         }
-
-        if (result == ShotResult.HIT || result == ShotResult.SUNK) {
-            CellRenderer.drawHit(pane);
-        }
-
-        if (result == ShotResult.SUNK) {
-            CellRenderer.drawSunk(pane);
-        }
-        Rectangle preview = new Rectangle(28, 28);
-        preview.setFill(Color.color(0, 1, 0, 0.4));
-        pane.getChildren().add(preview);
-
     }
 
-
+    /**
+     * Renderiza el estado inicial del juego.
+     */
     public void renderInitialState() {
-
         renderPlayerShips();
         renderPreviousShots();
         updateUIForPhase();
     }
 
-    private void paintSunkShip(int r, int c) {
-
-        Ship ship = gameController
-                .getPlayerBoard()
-                .getCell(r, c)
-                .getShip();
-
-        Board board = gameController.getPlayerBoard();
-
-        for (String pos : ship.getPositions()) {
-            String[] parts = pos.split(",");
-            int row = Integer.parseInt(parts[0]);
-            int col = Integer.parseInt(parts[1]);
-
-            StackPane pane = (StackPane) playerGrid.getChildren()
-                    .get(row * 10 + col);
-
-            pane.setStyle("""
-            -fx-background-color: darkred;
-            -fx-border-color: black;
-        """);
-        }
-    }
-
-    private ShipType selectedShipType = ShipType.DESTROYER;
-    private boolean vertical = false;
-
+    /**
+     * Maneja el clic en una celda del tablero del jugador durante la fase de colocación.
+     *
+     * @param r Fila
+     * @param c Columna
+     */
     private void onPlayerCellClicked(int r, int c) {
-
         if (gameController.getPhase() != GameController.GamePhase.SETUP) {
             return;
         }
@@ -248,104 +258,100 @@ public class NavalGameViewController implements TurnListener {
         try {
             Ship ship = new Ship(type);
             boolean vertical = verticalCheck.isSelected();
-            gameController.getPlayerBoard()
-                    .placeShip(ship, r, c, vertical);
+            gameController.getPlayerBoard().placeShip(ship, r, c, vertical);
 
             placedShipTypes.add(type);
             renderPlayerShips();
             selectNextAvailableShip();
 
-
-            System.out.println(
-                    "Barcos colocados: "
-                            + placedShipTypes.size()
-                            + "/"
-                            + ShipType.values().length
-            );
+            System.out.println("Barcos colocados: " + placedShipTypes.size() + "/" + ShipType.values().length);
 
             if (placedShipTypes.size() == ShipType.values().length) {
                 turnLabel.setText("Todos los barcos colocados. Presiona Start");
                 startButton.setDisable(false);
             }
         } catch (Exception ex) {
-            System.out.println("Invalid placement: " + ex.getMessage());
+            System.out.println("Colocación inválida: " + ex.getMessage());
         }
     }
 
+    /**
+     * Alterna la orientación de colocación de barcos.
+     */
     public void toggleOrientation() {
         vertical = !vertical;
         verticalCheck.setSelected(vertical);
-
-        turnLabel.setText(
-                vertical ? "Orientación: Vertical" : "Orientación: Horizontal"
-        );
+        turnLabel.setText(vertical ? "Orientación: Vertical" : "Orientación: Horizontal");
     }
 
-    private Set<ShipType> placedShipTypes = new HashSet<>();
-
-
-
-    private int totalShipsRequired() {
-        return ShipType.values().length;
-    }
-
-    @Override
-    public void onGameOver(boolean playerWon) {
-        Platform.runLater(() -> {
-            updateUIForPhase();
-            turnLabel.setText(playerWon ? "¡GANASTE!" : "PERDISTE");
-        });
-    }
-
-
+    /**
+     * Muestra una vista previa de la colocación del barco.
+     *
+     * @param r Fila inicial
+     * @param c Columna inicial
+     */
     private void showShipPreview(int r, int c) {
         ShipType type = shipSelector.getValue();
         if (type == null) return;
 
         int size = type.getSize();
         boolean vertical = verticalCheck.isSelected();
+        Board board = gameController.getPlayerBoard();
 
         for (int i = 0; i < size; i++) {
             int rr = vertical ? r + i : r;
             int cc = vertical ? c : c + i;
 
             if (rr >= 10 || cc >= 10) return;
+            if (board.getCell(rr, cc).hasShip()) return;
 
-            StackPane pane = (StackPane) playerGrid.getChildren()
-                    .get(rr * 10 + cc);
-
-            pane.setStyle("""
-            -fx-background-color: rgba(0,255,0,0.4);
-            -fx-border-color: black;
-        """);
+            StackPane pane = (StackPane) playerGrid.getChildren().get(rr * 10 + cc);
+            pane.setStyle("-fx-background-color: rgba(34,197,94,0.5); -fx-border-color: black;");
         }
     }
 
+    /**
+     * Limpia la vista previa de colocación.
+     */
     private void clearShipPreview() {
-        for (int i = 0; i < playerGrid.getChildren().size(); i++) {
-            StackPane pane = (StackPane) playerGrid.getChildren().get(i);
-            pane.setStyle("""
-            -fx-background-color: lightblue;
-            -fx-border-color: black;
-        """);
+        Board board = gameController.getPlayerBoard();
+
+        for (int r = 0; r < 10; r++) {
+            for (int c = 0; c < 10; c++) {
+                StackPane pane = (StackPane) playerGrid.getChildren().get(r * 10 + c);
+                Cell cell = board.getCell(r, c);
+
+                if (cell.hasShip()) {
+                    pane.setStyle("-fx-background-color: darkgray; -fx-border-color: black;");
+                } else {
+                    pane.setStyle("-fx-background-color: lightblue; -fx-border-color: black;");
+                }
+            }
         }
-        renderPlayerShips(); // vuelve a pintar barcos reales
     }
 
-    private void renderEnemyShots() {
+    /**
+     * Renderiza los disparos previos en el tablero enemigo.
+     */
+    public void renderPreviousShots() {
         Board enemyBoard = gameController.getEnemyBoard();
 
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
                 Cell cell = enemyBoard.getCell(r, c);
                 if (cell.wasShot()) {
-                    ShotResult result = cell.hasShip() ? ShotResult.HIT : ShotResult.MISS;
+                    ShotResult result = cell.hasShip()
+                            ? (cell.getShip().isSunk() ? ShotResult.SUNK : ShotResult.HIT)
+                            : ShotResult.MISS;
                     renderShotResultOnPane(r, c, result);
                 }
             }
         }
     }
 
+    /**
+     * Actualiza la interfaz según la fase actual del juego.
+     */
     public void updateUIForPhase() {
         switch (gameController.getPhase()) {
             case SETUP -> {
@@ -369,37 +375,19 @@ public class NavalGameViewController implements TurnListener {
             }
         }
     }
-    public void renderPreviousShots() {
 
-        Board enemyBoard = gameController.getEnemyBoard();
-
-        for (int r = 0; r < 10; r++) {
-            for (int c = 0; c < 10; c++) {
-
-                Cell cell = enemyBoard.getCell(r, c);
-
-                if (cell.wasShot()) {
-                    ShotResult result = cell.hasShip()
-                            ? (cell.getShip().isSunk() ? ShotResult.SUNK : ShotResult.HIT)
-                            : ShotResult.MISS;
-
-                    renderShotResultOnPane(r, c, result);
-                }
-            }
-        }
-    }
+    /**
+     * Renderiza los barcos del jugador en su tablero.
+     */
     private void renderPlayerShips() {
-
         Board board = gameController.getPlayerBoard();
 
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
-
                 Cell cell = board.getCell(r, c);
                 StackPane pane = (StackPane) playerGrid.getChildren().get(r * 10 + c);
 
                 CellRenderer.drawWater(pane);
-
                 if (cell.hasShip()) {
                     CellRenderer.drawShip(pane);
                 }
@@ -407,17 +395,19 @@ public class NavalGameViewController implements TurnListener {
         }
     }
 
-
-
-    @FXML
-    private ComboBox<ShipType> shipSelector;
-
-    @FXML
-    private CheckBox verticalCheck;
-
-    @FXML
-    private Button startButton;
-
-
+    /**
+     * Reproduce una animación de impacto.
+     *
+     * @param cell Celda a animar
+     */
+    private void playHitAnimation(StackPane cell) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(180), cell);
+        st.setFromX(1);
+        st.setFromY(1);
+        st.setToX(1.25);
+        st.setToY(1.25);
+        st.setAutoReverse(true);
+        st.setCycleCount(2);
+        st.play();
+    }
 }
-

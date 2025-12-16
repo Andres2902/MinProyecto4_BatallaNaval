@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests unitarios para Board.
+ */
 class BoardTest {
 
     @Test
@@ -29,9 +32,9 @@ class BoardTest {
     @Test
     void shootAt_hit_miss_sunk() throws InvalidPlacementException {
         Board b = new Board();
-        Ship s = new Ship(ShipType.FRIGATE); // size 1
+        Ship s = new Ship(ShipType.FRIGATE);
         b.placeShip(s, 5, 5, false);
         assertEquals(ShotResult.SUNK, b.shootAt(5,5));
-        assertThrows(GameStateException.class, () -> b.shootAt(5,5)); // already shot
+        assertThrows(GameStateException.class, () -> b.shootAt(5,5));
     }
 }
