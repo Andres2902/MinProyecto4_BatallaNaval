@@ -39,7 +39,7 @@ public class GameController {
        IA
        ========================= */
 
-    private final ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
+    public final ExecutorService aiExecutor = Executors.newSingleThreadExecutor();
     private final Random random = new Random();
 
     /* =========================
@@ -301,27 +301,29 @@ public class GameController {
     /**
      * Coloca todos los barcos del enemigo de forma aleatoria en su tablero.
      */
-    public void placeEnemyShipsRandomly() {
+    private void placeEnemyShipsRandomly() {
+        Board enemyBoard = this.enemyBoard;
+        Random random = new Random();
 
         for (ShipType type : ShipType.values()) {
-            boolean placed = false;
+            int count = 0;
 
-            while (!placed) {
-                int row = random.nextInt(Board.SIZE);
-                int col = random.nextInt(Board.SIZE);
+            while (count < type.getMaxCount()) {
+                int row = random.nextInt(10);
+                int col = random.nextInt(10);
                 boolean vertical = random.nextBoolean();
 
-                Ship ship = new Ship(type);
-
                 try {
+                    Ship ship = new Ship(type);
                     enemyBoard.placeShip(ship, row, col, vertical);
-                    placed = true;
-                } catch (InvalidPlacementException ignored) {
-                    // Se reintenta hasta encontrar una posición válida
+                    count++;
+                } catch (Exception ignored) {
+                    // Si no se puede colocar, intenta otra posición
                 }
             }
         }
     }
+
 
 
     /* =========================

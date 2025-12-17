@@ -1,10 +1,15 @@
 package com.example.batalla_naval.view;
 
+import com.example.batalla_naval.model.Ship;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+
+import static com.example.batalla_naval.model.ShipType.*;
+
 
 /**
  * Renderizador de celdas para la interfaz gráfica.
@@ -29,11 +34,58 @@ public class CellRenderer {
      *
      * @param cell StackPane donde dibujar
      */
-    public static void drawShip(StackPane cell) {
-        Rectangle ship = new Rectangle(28, 28);
-        ship.setFill(Color.DARKGRAY);
-        cell.getChildren().add(ship);
+
+    public static void drawShip(StackPane cell, Ship ship) {
+        cell.getChildren().clear();
+
+        switch (ship.getType()) {
+
+            case FRIGATE -> {
+                // 🔺 Triángulo
+                Polygon triangle = new Polygon(
+                        16.0, 4.0,
+                        28.0, 28.0,
+                        4.0, 28.0
+                );
+                triangle.setFill(Color.web("#A9A9A9"));
+                triangle.setStroke(Color.web("#9a3412"));
+                triangle.setStrokeWidth(1.5);
+                cell.getChildren().add(triangle);
+            }
+
+            case DESTROYER -> {
+                // ◼ Cuadrado
+                Rectangle square = new Rectangle(30, 30);
+                square.setFill(Color.web("#A9A9A9"));
+                square.setStroke(Color.web("#9a3412"));
+                square.setStrokeWidth(1.5);
+                cell.getChildren().add(square);
+            }
+
+            case SUBMARINE -> {
+                Circle circle = new Circle(12);
+                circle.setFill(Color.web("#A9A9A9"));
+                circle.setStroke(Color.web("#9a3412"));
+                circle.setStrokeWidth(1.5);
+                cell.getChildren().add(circle);
+            }
+
+            case CARRIER -> {
+                // ◆ Rombo
+                Polygon diamond = new Polygon(
+                        16.0, 2.0,
+                        30.0, 16.0,
+                        16.0, 30.0,
+                        2.0, 16.0
+                );
+                diamond.setFill(Color.web("#A9A9A9"));
+                diamond.setStroke(Color.web("#9a3412"));
+                diamond.setStrokeWidth(1.5);
+                cell.getChildren().add(diamond);
+            }
+        }
     }
+
 
     /**
      * Dibuja un impacto en una celda.
@@ -72,13 +124,27 @@ public class CellRenderer {
         cell.getChildren().addAll(l1, l2);
     }
     public static void drawPreview(StackPane cell) {
-        Rectangle bg = (Rectangle) cell.getChildren().get(0);
-        bg.setFill(Color.rgb(34, 197, 94, 0.5));
+        for (javafx.scene.Node node : cell.getChildren()) {
+            if (node instanceof Rectangle rect) {
+                rect.setFill(Color.rgb(34, 197, 94, 0.5));
+                return;
+            }
+        }
     }
 
+
     public static void clearPreview(StackPane cell, boolean hasShip) {
-        Rectangle bg = (Rectangle) cell.getChildren().get(0);
+        for (javafx.scene.Node node : cell.getChildren()) {
+            if (node instanceof Rectangle rect) {
+                rect.setFill(hasShip ? Color.DARKGRAY : Color.LIGHTBLUE);
+                return;
+            }
+        }
+
+        Rectangle bg = new Rectangle(32, 32);
         bg.setFill(hasShip ? Color.DARKGRAY : Color.LIGHTBLUE);
+        cell.getChildren().add(0, bg);
     }
+
 
 }

@@ -5,36 +5,30 @@ package com.example.batalla_naval.model;
  * Cada tipo tiene un tamaño y un nombre descriptivo.
  */
 public enum ShipType {
-    CARRIER(4, "Portaaviones"),
-    SUBMARINE(3, "Submarino"),
-    DESTROYER(2, "Destructor"),
-    FRIGATE(1, "Fragata");
+    CARRIER(4, "Portaaviones", 1),
+    SUBMARINE(3, "Submarino", 2),
+    DESTROYER(2, "Destructor", 3),
+    FRIGATE(1, "Fragata", 4);
 
     private final int size;
     private final String name;
+    private final int maxCount;
 
-    /**
-     * Constructor del tipo de barco.
-     *
-     * @param size Tamaño del barco (número de celdas que ocupa)
-     * @param name Nombre descriptivo del barco
-     */
-    ShipType(int size, String name) {
+    ShipType(int size, String name, int maxCount) {
         this.size = size;
         this.name = name;
+        this.maxCount = maxCount;
     }
 
-    /**
-     * @return Tamaño del barco en celdas
-     */
     public int getSize() {
         return size;
     }
 
-    /**
-     * @return Nombre descriptivo del barco
-     */
     public String getName() {
         return name;
+    }
+
+    public int getMaxCount() {
+        return maxCount;
     }
 }

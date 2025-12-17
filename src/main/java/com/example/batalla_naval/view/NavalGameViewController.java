@@ -16,7 +16,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,7 +41,7 @@ public class NavalGameViewController implements TurnListener {
     private boolean devMode = false;
     private GameController gameController;
     private boolean vertical = false;
-    private final Set<ShipType> placedShipTypes = new HashSet<>();
+    private final Map<ShipType, Integer> placedShips = new EnumMap<>(ShipType.class);
     private Main mainApp;
 
     /**
@@ -58,12 +60,9 @@ public class NavalGameViewController implements TurnListener {
         startButton.setDisable(true);
         startButton.setOnAction(e -> startGame());
 
-        shipSelector.setOnAction(e -> {
-            ShipType selected = shipSelector.getValue();
-            if (placedShipTypes.contains(selected)) {
-                selectNextAvailableShip();
-            }
-        });
+        for (ShipType type : ShipType.values()) {
+            placedShips.put(type, 0);
+        }
 
         restartButton.setOnAction(e -> restartGame());
         menuButton.setOnAction(e -> returnToMenu());
@@ -92,12 +91,13 @@ public class NavalGameViewController implements TurnListener {
      */
     private void selectNextAvailableShip() {
         for (ShipType type : ShipType.values()) {
-            if (!placedShipTypes.contains(type)) {
+            if (placedShips.get(type) < type.getMaxCount()) {
                 shipSelector.setValue(type);
                 return;
             }
         }
     }
+
 
     /**
      * Maneja el clic en una celda del tablero enemigo.
@@ -287,9 +287,12 @@ public class NavalGameViewController implements TurnListener {
         }
 
         ShipType type = shipSelector.getValue();
+        int placed = placedShips.get(type);
 
-        if (placedShipTypes.contains(type)) {
-            System.out.println("Ese tipo de barco ya fue colocado: " + type);
+
+        if (placed >= type.getMaxCount()) {
+            System.out.println("Ya colocaste todos los " + type.getName());
+            selectNextAvailableShip();
             return;
         }
 
@@ -298,20 +301,35 @@ public class NavalGameViewController implements TurnListener {
             boolean vertical = verticalCheck.isSelected();
             gameController.getPlayerBoard().placeShip(ship, r, c, vertical);
 
-            placedShipTypes.add(type);
+
+            placedShips.put(type, placed + 1);
+
             renderPlayerShips();
             selectNextAvailableShip();
 
-            System.out.println("Barcos colocados: " + placedShipTypes.size() + "/" + ShipType.values().length);
 
-            if (placedShipTypes.size() == ShipType.values().length) {
+            int totalPlaced = placedShips.values()
+                    .stream()
+                    .mapToInt(Integer::intValue)
+                    .sum();
+
+            int totalRequired = 0;
+            for (ShipType t : ShipType.values()) {
+                totalRequired += t.getMaxCount();
+            }
+
+            System.out.println("Barcos colocados: " + totalPlaced + "/" + totalRequired);
+
+            if (totalPlaced == totalRequired) {
                 turnLabel.setText("Todos los barcos colocados. Presiona Start");
                 startButton.setDisable(false);
             }
+
         } catch (Exception ex) {
             System.out.println("Colocación inválida: " + ex.getMessage());
         }
     }
+
 
     /**
      * Alterna la orientación de colocación de barcos.
@@ -438,7 +456,7 @@ public class NavalGameViewController implements TurnListener {
                 } else {
                     CellRenderer.drawWater(pane);
                     if (cell.hasShip()) {
-                        CellRenderer.drawShip(pane);
+                        CellRenderer.drawShip(pane, cell.getShip());
                     }
                 }
             }
@@ -502,8 +520,11 @@ public class NavalGameViewController implements TurnListener {
         this.gameController = newController;
         newController.setTurnListener(this);
 
+        placedShips.clear();
+        for (ShipType type : ShipType.values()) {
+            placedShips.put(type, 0);
+        }
 
-        placedShipTypes.clear();
 
 
         shipSelector.getItems().clear();
@@ -589,7 +610,7 @@ public class NavalGameViewController implements TurnListener {
                     }
                 } else if (devMode && cell.hasShip()) {
                     // Modo developer: mostrar barco enemigo
-                    CellRenderer.drawShip(pane);
+                    CellRenderer.drawShip(pane, cell.getShip());
                 } else {
                     // Normal: mostrar agua
                     CellRenderer.drawWater(pane);
