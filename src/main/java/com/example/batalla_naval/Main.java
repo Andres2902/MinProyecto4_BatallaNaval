@@ -18,7 +18,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.example.batalla_naval.persistence.SaveManager.loadGame;
-
+/**
+ * Main
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
+ */
 public class Main extends Application {
 
     private GameController gameController;

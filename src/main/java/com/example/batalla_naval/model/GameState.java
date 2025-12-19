@@ -6,6 +6,9 @@ import java.io.Serializable;
 /**
  * Representa el estado completo del juego para poder guardar y cargar partidas.
  * Contiene ambos tableros y la fase actual del juego.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class GameState implements Serializable {
     private final Board playerBoard;

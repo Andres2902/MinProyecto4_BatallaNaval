@@ -12,6 +12,9 @@ import java.nio.file.Path;
  * Controlador de la pantalla de bienvenida.
  * Permite ingresar el nombre del jugador, seleccionar dificultad
  * y notifica al sistema cuando se desea iniciar una nueva partida.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class WelcomeViewController {
 

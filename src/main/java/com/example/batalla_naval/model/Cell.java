@@ -6,6 +6,9 @@ import java.io.Serializable;
  * Representa una celda individual en el tablero de juego.
  * Cada celda tiene coordenadas (fila, columna) y puede contener
  * un barco o estar vacía. También registra si ha sido disparada.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class Cell implements Serializable {
     private final int row;

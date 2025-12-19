@@ -9,6 +9,9 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Gestor de guardado y carga de partidas y registros de jugadores.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class SaveManager {
     private static final DateTimeFormatter TF = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");

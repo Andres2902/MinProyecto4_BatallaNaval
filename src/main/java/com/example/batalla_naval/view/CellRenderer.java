@@ -14,6 +14,9 @@ import static com.example.batalla_naval.model.ShipType.*;
 /**
  * Renderizador de celdas para la interfaz gráfica.
  * Proporciona métodos estáticos para dibujar diferentes estados de celda.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class CellRenderer {
 

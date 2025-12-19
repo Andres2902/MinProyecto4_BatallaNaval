@@ -9,6 +9,9 @@ import java.util.*;
 /**
  * Representa el tablero de juego de batalla naval.
  * Contiene celdas, barcos y maneja la lógica de colocación y disparos.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class Board implements Serializable {
     /** Tamaño del tablero (cuadrado) */

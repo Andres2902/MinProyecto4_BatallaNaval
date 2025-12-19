@@ -7,6 +7,9 @@ import java.util.List;
 /**
  * Representa un barco en el juego de batalla naval.
  * Mantiene registro de sus posiciones y los impactos recibidos.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class Ship implements Serializable {
     private final ShipType type;

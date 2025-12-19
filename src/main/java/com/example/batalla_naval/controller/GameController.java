@@ -15,6 +15,9 @@ import java.util.concurrent.Executors;
 /**
  * Controlador principal del juego.
  * Maneja la lógica del juego, turnos, fases, IA y guardado.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class GameController {
 

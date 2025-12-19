@@ -24,6 +24,9 @@ import java.util.Set;
 /**
  * Controlador de la vista principal del juego.
  * Maneja la interfaz de usuario y la interacción con el controlador del juego.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class NavalGameViewController implements TurnListener {
 

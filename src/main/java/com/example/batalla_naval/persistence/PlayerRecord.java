@@ -2,6 +2,9 @@ package com.example.batalla_naval.persistence;
 
 /**
  * Representa un registro de jugador para guardar estadísticas.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public class PlayerRecord {
     private final String nickname;

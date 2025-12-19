@@ -3,6 +3,9 @@ package com.example.batalla_naval.model;
 /**
  * Enumeración que define los tipos de barcos disponibles en el juego.
  * Cada tipo tiene un tamaño y un nombre descriptivo.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public enum ShipType {
     CARRIER(4, "Portaaviones", 1),

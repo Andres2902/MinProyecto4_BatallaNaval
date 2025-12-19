@@ -4,6 +4,9 @@ import com.example.batalla_naval.model.ShotResult;
 
 /**
  * Interfaz para notificaciones sobre cambios de turno y eventos del juego.
+ * Autores: Jairo Andres &  Juan Sebastian Tapia
+ * Version: 1.0
+ * Fecha: 2025
  */
 public interface TurnListener {
 
